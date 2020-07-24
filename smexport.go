@@ -51,7 +51,7 @@ func main() {
             concatenated := fmt.Sprintf("%s?page=%d", link, i)
             //fmt.Println(concatenated)
             
-            jsonData := new(DomainPagedRecords)
+            jsonData := new(ScopeLinePagedRecords)
             getJson(concatenated, jsonData)
             
             for currentIndex := range jsonData.Objects {
