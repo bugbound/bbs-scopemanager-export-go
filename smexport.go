@@ -37,6 +37,7 @@ type UrlRecord struct {
     Id int
 }
 
+/*
 func main() {
     if os.Args[1] == "domain" {
         firstPage := new(ScopeLinePagedRecords) 
@@ -152,6 +153,9 @@ func mainOLD() {
         }
     }
 }
+*/
+
+
 
 func contains(arr []string, str string) bool {
    for _, a := range arr {
