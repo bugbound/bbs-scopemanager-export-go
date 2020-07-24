@@ -18,9 +18,9 @@ type ScopeLinePagedRecords struct {
 }
 
 type ScopeLineRecord struct {
-    lineitem string
-    id int
-    project_id int
+    Id int
+    Lineitem string
+    Project_id int
 }
 
 
@@ -55,7 +55,7 @@ func main() {
             getJson(concatenated, jsonData)
             
             for currentIndex := range jsonData.Objects {
-                fmt.Println(jsonData.Objects[currentIndex])
+                fmt.Println(jsonData.Objects[currentIndex].Lineitem)
             }
         }
     }    
