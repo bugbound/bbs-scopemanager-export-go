@@ -6,10 +6,12 @@ import (
     "encoding/json"
     "os"
     "fmt"
-    "reflect"
-    
+    "strings"
 )
 
+type TotalPageCountInfo struct {
+    Total_pages int
+}
 
 type ScopeLinePagedRecords struct {
     Num_results int  
@@ -25,25 +27,28 @@ type ScopeLineRecord struct {
 }
 
 
-
-type UrlPagedRecords struct {
+type DnsStorePagedRecords struct {
     Num_results int  
     Page int
-    Objects []UrlRecord
+    Objects []DnsStoreRecord
     Total_pages int
 }
 
-type UrlRecord struct {
-    Url string
+type DnsStoreRecord struct {
     Id int
+    Domain string
 }
+
+
 
 
 func main() {
     if os.Args[1] == "domain" {
-        scope_lines := []
+        var scope_lines []string
         firstPage := new(ScopeLinePagedRecords) 
         link := "http://bbs-scopemanager-service:7000/api/scope_line"
+        
+        // get page count
         getJson("http://bbs-scopemanager-service:7000/api/scope_line?page=1", firstPage)
         totalPages := firstPage.Total_pages
         //fmt.Println(totalPages)
@@ -56,109 +61,73 @@ func main() {
             jsonData := new(ScopeLinePagedRecords)
             getJson(concatenated, jsonData)
             
+            //fmt.Println("Getting line items...")
             for currentIndex := range jsonData.Objects {
-                fmt.Println(jsonData.Objects[currentIndex].Lineitem)
-                scope_lines.append(Lineitem)
-            }
-        }
-        
-        fmt.Println(itemExists(scope_lines, "*.bah.com"))
-    }    
-}
-/*
-func mainOLD() {
-    if os.Args[1] == "domain" {
-        firstPage := new(DomainPagedRecords) 
-        link := "http://bbsstore-service:7002/api/dns_store"
-        getJson("http://bbsstore-service:7002/api/dns_store?page=1", firstPage)
-        totalPages := firstPage.Total_pages
-        //fmt.Println(totalPages)
-        
-        for i := 1; i <= totalPages; i++ {
-            //fmt.Println(i)
-            concatenated := fmt.Sprintf("%s?page=%d", link, i)
-            //fmt.Println(concatenated)
-            
-            jsonData := new(DomainPagedRecords)
-            getJson(concatenated, jsonData)
-            
-            for currentIndex := range jsonData.Objects {
-                fmt.Println(jsonData.Objects[currentIndex].Domain)
-            }
-        }
-    }
-    
-    if os.Args[1] == "url" {
-        firstPage := new(UrlPagedRecords) 
-        link := "http://bbsstore-service:7002/api/url_store"
-        getJson("http://bbsstore-service:7002/api/url_store?page=1", firstPage)
-        totalPages := firstPage.Total_pages
-        //fmt.Println(totalPages)
-        
-        for i := 1; i <= totalPages; i++ {
-            //fmt.Println(i)
-            concatenated := fmt.Sprintf("%s?page=%d", link, i)
-            //fmt.Println(concatenated)
-            
-            jsonData := new(UrlPagedRecords)
-            getJson(concatenated, jsonData)
-            
-            for currentIndex := range jsonData.Objects {
-                fmt.Println(jsonData.Objects[currentIndex].Url)
-            }
-        }
-    }
-    
-    if os.Args[1] == "param" {
-        firstPage := new(UrlPagedRecords) 
-        link := "http://bbsstore-service:7002/api/url_store"
-        // we could improve this code by querying url_store api only for urls containing '?' and '='
-        getJson("http://bbsstore-service:7002/api/url_store?page=1", firstPage)
-        totalPages := firstPage.Total_pages
-        //totalPages = 300
-        
-        //fmt.Println(totalPages)
-        
-        //var foundParams
-        
-        var foundParams []string
-        
-        for i := 1; i <= totalPages; i++ {
-            //fmt.Println(i)
-            concatenated := fmt.Sprintf("%s?page=%d", link, i)
-            //fmt.Println(concatenated)
-            
-            jsonData := new(UrlPagedRecords)
-            getJson(concatenated, jsonData)
-            
-            
-            for currentIndex := range jsonData.Objects {
-                currentObject  := jsonData.Objects[currentIndex]
-                if strings.Contains(currentObject.Url, "?") {
-                    //fmt.Println(currentObject.Url)
-                    
-                    paramStr := strings.Split(currentObject.Url, "?")[1]
-                    params := strings.Split(paramStr, "&")
-                    for _, param := range params {
-                        // ignore any params without an =, these might be used for cache busting
-                        if strings.Contains(param, "="){
-                            paramKeyandValue := strings.Split(param, "=")
-                            paramKey := paramKeyandValue[0]
-                            //fmt.Println(paramKey)
-                            if contains(foundParams, paramKey) == false {
-                                fmt.Println(paramKey)
-                                foundParams = append(foundParams, paramKey)
-                            }
-                        }
-                    }
-                    
-                    
+                if contains(scope_lines, jsonData.Objects[currentIndex].Lineitem) == false {
+                    scope_lines = append(scope_lines, jsonData.Objects[currentIndex].Lineitem)
                 }
             }
+            
+            // now loop scope getting domains
+            for currentIndex := range scope_lines {
+                //fmt.Println(scope_lines[currentIndex])
+                var Domains = getDomainListFromWildcardScopeLine(scope_lines[currentIndex])
+                //fmt.Println(Domains)
+                
+                //fmt.Printf("%v", Domains)
+                fmt.Println(strings.Join(Domains, "\n"))
+                
+                //fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+            
+            }
+            
+            //fmt.Println("Getting hosts for line items")
         }
-    }
+        
+        
+    }    
 }
-*/
+
+
+
+
+func getDomainListFromWildcardScopeLine(scopeline string) []string {
+    
+    var domain string = strings.Replace(scopeline, "*", "%", -1)
+    var records []string
+    records = append(records, strings.Replace(scopeline, "*.", "", -1))
+    //fmt.Println(domain)
+    link := "http://bbsstore-service:7002/api/dns_store"
+    searchQuery := fmt.Sprintf(`{"filters":[{"name":"domain","op":"like","val":"%s"}]}`, domain)
+    firstPageLink := fmt.Sprintf(`%s?page=1&q=%s`, link, searchQuery)
+    //fmt.Println(firstPageLink)
+
+    totalPageCount := new(TotalPageCountInfo) 
+    getJson(firstPageLink, totalPageCount)
+
+    totalPages := totalPageCount.Total_pages
+    //fmt.Println(totalPages)
+    
+    for i := 1; i <= totalPages; i++ {
+            concatenated := fmt.Sprintf("%s?page=%d&q=%s", link, i, searchQuery)
+            //fmt.Println(concatenated)
+            jsonData := new(DnsStorePagedRecords)
+            getJson(concatenated, jsonData)     
+            for currentIndex := range jsonData.Objects {
+                lookup := jsonData.Objects[currentIndex].Domain
+                if strings.Index(lookup, "*.") > -1 {
+                    lookup = strings.Replace(lookup, "*.", "", -1)
+                }
+                
+                if contains(records, lookup) == false {
+                    records = append(records, lookup)
+                }
+            }        
+        }
+    
+    return records
+}
+
 
 
 
@@ -180,25 +149,12 @@ func getJson(url string, target interface{}) error {
         return err
     }
     defer r.Body.Close()
-
+    //fmt.Println("response Status:", r.Status)
+    
     return json.NewDecoder(r.Body).Decode(target)
 }
 
 
 
 
-func itemExists(arrayType interface{}, item interface{}) bool {
-	arr := reflect.ValueOf(arrayType)
 
-	if arr.Kind() != reflect.Array {
-		panic("Invalid data-type")
-	}
-
-	for i := 0; i < arr.Len(); i++ {
-		if arr.Index(i).Interface() == item {
-			return true
-		}
-	}
-
-	return false
-}
