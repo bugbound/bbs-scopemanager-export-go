@@ -37,6 +37,29 @@ type UrlRecord struct {
 func main() {
     if os.Args[1] == "domain" {
         firstPage := new(DomainPagedRecords) 
+        link := "http://bbs-scopemanager-service:7000/api/scope_line"
+        getJson("http://bbs-scopemanager-service:7000/api/scope_line?page=1", firstPage)
+        totalPages := firstPage.Total_pages
+        //fmt.Println(totalPages)
+        
+        for i := 1; i <= totalPages; i++ {
+            //fmt.Println(i)
+            concatenated := fmt.Sprintf("%s?page=%d", link, i)
+            //fmt.Println(concatenated)
+            
+            jsonData := new(DomainPagedRecords)
+            getJson(concatenated, jsonData)
+            
+            for currentIndex := range jsonData.Objects {
+                fmt.Println(jsonData.Objects[currentIndex].lineitem)
+            }
+        }
+    }    
+}
+
+func mainOLD() {
+    if os.Args[1] == "domain" {
+        firstPage := new(DomainPagedRecords) 
         link := "http://bbsstore-service:7002/api/dns_store"
         getJson("http://bbsstore-service:7002/api/dns_store?page=1", firstPage)
         totalPages := firstPage.Total_pages
