@@ -55,7 +55,7 @@ func main() {
             getJson(concatenated, jsonData)
             
             for currentIndex := range jsonData.Objects {
-                fmt.Println(jsonData.Objects[currentIndex].lineitem)
+                fmt.Println(jsonData.Objects[currentIndex])
             }
         }
     }    
