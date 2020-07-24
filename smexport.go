@@ -10,17 +10,20 @@ import (
 )
 
 
-type DomainPagedRecords struct {
+type ScopeLinePagedRecords struct {
     Num_results int  
     Page int
-    Objects []DomainRecord
+    Objects []ScopeLineRecord
     Total_pages int
 }
 
-type DomainRecord struct {
-    Domain string
-    Id int
+type ScopeLineRecord struct {
+    lineitem string
+    id int
+    project_id int
 }
+
+
 
 type UrlPagedRecords struct {
     Num_results int  
@@ -36,7 +39,7 @@ type UrlRecord struct {
 
 func main() {
     if os.Args[1] == "domain" {
-        firstPage := new(DomainPagedRecords) 
+        firstPage := new(ScopeLinePagedRecords) 
         link := "http://bbs-scopemanager-service:7000/api/scope_line"
         getJson("http://bbs-scopemanager-service:7000/api/scope_line?page=1", firstPage)
         totalPages := firstPage.Total_pages
