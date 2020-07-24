@@ -6,6 +6,7 @@ import (
     "encoding/json"
     "os"
     "fmt"
+    "reflect"
     
 )
 
@@ -40,6 +41,7 @@ type UrlRecord struct {
 
 func main() {
     if os.Args[1] == "domain" {
+        scope_lines := []
         firstPage := new(ScopeLinePagedRecords) 
         link := "http://bbs-scopemanager-service:7000/api/scope_line"
         getJson("http://bbs-scopemanager-service:7000/api/scope_line?page=1", firstPage)
@@ -56,8 +58,11 @@ func main() {
             
             for currentIndex := range jsonData.Objects {
                 fmt.Println(jsonData.Objects[currentIndex].Lineitem)
+                scope_lines.append(Lineitem)
             }
         }
+        
+        fmt.Println(itemExists(scope_lines, "*.bah.com"))
     }    
 }
 /*
@@ -177,4 +182,23 @@ func getJson(url string, target interface{}) error {
     defer r.Body.Close()
 
     return json.NewDecoder(r.Body).Decode(target)
+}
+
+
+
+
+func itemExists(arrayType interface{}, item interface{}) bool {
+	arr := reflect.ValueOf(arrayType)
+
+	if arr.Kind() != reflect.Array {
+		panic("Invalid data-type")
+	}
+
+	for i := 0; i < arr.Len(); i++ {
+		if arr.Index(i).Interface() == item {
+			return true
+		}
+	}
+
+	return false
 }
