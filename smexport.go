@@ -34,7 +34,7 @@ type UrlRecord struct {
     Id int
 }
 
-/*
+
 func main() {
     if os.Args[1] == "domain" {
         firstPage := new(ScopeLinePagedRecords) 
@@ -57,7 +57,7 @@ func main() {
         }
     }    
 }
-
+/*
 func mainOLD() {
     if os.Args[1] == "domain" {
         firstPage := new(DomainPagedRecords) 
