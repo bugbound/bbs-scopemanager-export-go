@@ -78,22 +78,23 @@ func main() {
                     scope_lines = append(scope_lines, jsonData.Objects[currentIndex].Lineitem)
                 }
             }
-            
-            // now loop scope getting domains
-            for currentIndex := range scope_lines {
-                //fmt.Println(scope_lines[currentIndex])
-                var Domains = getDomainListFromWildcardScopeLine(scope_lines[currentIndex])
-                //fmt.Println(Domains)
-                
-                //fmt.Printf("%v", Domains)
-                fmt.Println(strings.Join(Domains, "\n"))
-                
-                //fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-            
-            }
-            
-            //fmt.Println("Getting hosts for line items")
         }
+            
+        // now loop scope getting domains
+        for currentIndex := range scope_lines {
+            //fmt.Println(scope_lines[currentIndex])
+            var Domains = getDomainListFromWildcardScopeLine(scope_lines[currentIndex])
+            //fmt.Println(Domains)
+            
+            //fmt.Printf("%v", Domains)
+            fmt.Println(strings.Join(Domains, "\n"))
+            
+            //fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        
+        }
+        
+        //fmt.Println("Getting hosts for line items")
+    
         
         
     }    
