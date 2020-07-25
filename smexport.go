@@ -39,7 +39,18 @@ type DnsStoreRecord struct {
     Domain string
 }
 
+type IpStorePagedRecords struct {
+    Num_results int  
+    Page int
+    Objects []IpStoreRecord
+    Total_pages int
+}
 
+type IpStoreRecord struct {
+    Id int
+    Domain string
+    Ip string
+}
 
 
 func main() {
@@ -86,6 +97,130 @@ func main() {
         
         
     }    
+
+
+    if os.Args[1] == "externalip" {
+        var scope_lines []string
+        var allDomains []string
+        var allIps []string
+        firstPage := new(ScopeLinePagedRecords) 
+        link := "http://bbs-scopemanager-service:7000/api/scope_line"
+        getJson(link, firstPage)
+        totalPages := firstPage.Total_pages
+        fmt.Println(totalPages)
+        
+        for i := 1; i <= totalPages; i++ {
+            //fmt.Println(i)
+            concatenated := fmt.Sprintf("%s?page=%d", link, i)
+            //fmt.Println(concatenated)
+            
+            jsonData := new(ScopeLinePagedRecords)
+            getJson(concatenated, jsonData)
+            
+            //fmt.Println("Getting line items...")
+            for currentIndex := range jsonData.Objects {
+                if contains(scope_lines, jsonData.Objects[currentIndex].Lineitem) == false {
+                    scope_lines = append(scope_lines, jsonData.Objects[currentIndex].Lineitem)
+                }
+            }
+        }
+            
+        // now loop scope getting domains
+        for currentIndex := range scope_lines {
+            //fmt.Println(scope_lines[currentIndex])
+            var Domains = getDomainListFromWildcardScopeLine(scope_lines[currentIndex])
+            for currentDomainIndex := range Domains {
+                if contains(allDomains, Domains[currentDomainIndex]) == false {
+                    allDomains = append(allDomains, Domains[currentDomainIndex])
+                    var ipRecords = getIPListFromDomain(Domains[currentDomainIndex])
+                    
+                    for iprIndex := range ipRecords {
+                        isExternal := true
+                        if strings.HasPrefix(ipRecords[iprIndex], "192.168") == true {isExternal=false}
+                        if strings.HasPrefix(ipRecords[iprIndex], "10.") == true {isExternal=false}
+                        
+                        if isExternal == true {
+                            if contains(allIps, ipRecords[iprIndex]) == false {
+                                fmt.Println(ipRecords[iprIndex])
+                                allIps = append(allIps, ipRecords[iprIndex])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        //for currentIpIndex := range allIps {
+        //    fmt.Println(allIps[currentIpIndex])
+        //}
+        
+        //fmt.Println("Getting hosts for line items")
+        
+        
+        
+    }    
+    
+    if os.Args[1] == "internalip" {
+        var scope_lines []string
+        var allDomains []string
+        var allIps []string
+        firstPage := new(ScopeLinePagedRecords) 
+        link := "http://bbs-scopemanager-service:7000/api/scope_line"
+        getJson(link, firstPage)
+        totalPages := firstPage.Total_pages
+        fmt.Println(totalPages)
+        
+        for i := 1; i <= totalPages; i++ {
+            //fmt.Println(i)
+            concatenated := fmt.Sprintf("%s?page=%d", link, i)
+            //fmt.Println(concatenated)
+            
+            jsonData := new(ScopeLinePagedRecords)
+            getJson(concatenated, jsonData)
+            
+            //fmt.Println("Getting line items...")
+            for currentIndex := range jsonData.Objects {
+                if contains(scope_lines, jsonData.Objects[currentIndex].Lineitem) == false {
+                    scope_lines = append(scope_lines, jsonData.Objects[currentIndex].Lineitem)
+                }
+            }
+        }
+            
+        // now loop scope getting domains
+        for currentIndex := range scope_lines {
+            //fmt.Println(scope_lines[currentIndex])
+            var Domains = getDomainListFromWildcardScopeLine(scope_lines[currentIndex])
+            for currentDomainIndex := range Domains {
+                if contains(allDomains, Domains[currentDomainIndex]) == false {
+                    allDomains = append(allDomains, Domains[currentDomainIndex])
+                    var ipRecords = getIPListFromDomain(Domains[currentDomainIndex])
+                    
+                    for iprIndex := range ipRecords {
+                        isExternal := true
+                        if strings.HasPrefix(ipRecords[iprIndex], "192.168") == true {isExternal=false}
+                        if strings.HasPrefix(ipRecords[iprIndex], "10.") == true {isExternal=false}
+                        
+                        if isExternal == false {
+                            if contains(allIps, ipRecords[iprIndex]) == false {
+                                fmt.Println(ipRecords[iprIndex])
+                                allIps = append(allIps, ipRecords[iprIndex])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        //for currentIpIndex := range allIps {
+        //    fmt.Println(allIps[currentIpIndex])
+        //}
+        
+        //fmt.Println("Getting hosts for line items")
+        
+        
+        
+    }   
+
 }
 
 
@@ -128,6 +263,39 @@ func getDomainListFromWildcardScopeLine(scopeline string) []string {
     return records
 }
 
+
+func getIPListFromDomain(scopeline string) []string {
+    
+    var domain string = strings.Replace(scopeline, "*", "%", -1)
+    var records []string
+    //fmt.Println(domain)
+    link := "http://bbsstore-service:7002/api/ip_store"
+    searchQuery := fmt.Sprintf(`{"filters":[{"name":"domain","op":"eq","val":"%s"}]}`, domain)
+    firstPageLink := fmt.Sprintf(`%s?page=1&q=%s`, link, searchQuery)
+    //fmt.Println(firstPageLink)
+
+    totalPageCount := new(TotalPageCountInfo) 
+    getJson(firstPageLink, totalPageCount)
+
+    totalPages := totalPageCount.Total_pages
+    //fmt.Println(totalPages)
+    
+    for i := 1; i <= totalPages; i++ {
+            concatenated := fmt.Sprintf("%s?page=%d&q=%s", link, i, searchQuery)
+            //fmt.Println(concatenated)
+            jsonData := new(IpStorePagedRecords)
+            getJson(concatenated, jsonData)     
+            for currentIndex := range jsonData.Objects {
+                lookup := jsonData.Objects[currentIndex].Ip
+                
+                if contains(records, lookup) == false {
+                    records = append(records, lookup)
+                }
+            }        
+        }
+    
+    return records
+}
 
 
 
