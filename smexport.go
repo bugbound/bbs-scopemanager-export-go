@@ -57,7 +57,6 @@ func main() {
     if os.Args[1] == "domain" {
         var scope_lines []string
         firstPage := new(ScopeLinePagedRecords) 
-        link := "http://bbs-scopemanager-service:7000/api/scope_line"
         
         BbsProjectId := os.Args[2]
         link := "http://bbs-scopemanager-service:7000/api/scope_line"
