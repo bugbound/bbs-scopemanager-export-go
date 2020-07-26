@@ -219,7 +219,7 @@ type IpOnIgnoreListRecord struct {
 }
 
 func isIpOnIgnoreList(ipToCheck string) bool  {
-    link := fmt.Sprintf("http://192.168.26.1:7000/check_ip?ip=%s", ipToCheck)
+    link := fmt.Sprintf("http://bbs-scopemanager-service:7000/check_ip?ip=%s", ipToCheck)
     result := new(IpOnIgnoreListRecord) 
     getJson(link, result)
     return result.Ignore
