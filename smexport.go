@@ -59,15 +59,18 @@ func main() {
         firstPage := new(ScopeLinePagedRecords) 
         link := "http://bbs-scopemanager-service:7000/api/scope_line"
         
+        BbsProjectId := os.Args[2]
+        link := "http://bbs-scopemanager-service:7000/api/scope_line"
+        searchQuery := fmt.Sprintf(`{"filters":[{"name":"project_id","op":"eq","val":"%s"}]}`, BbsProjectId)
+        firstPageLink := fmt.Sprintf(`%s?page=1&q=%s`, link, searchQuery)
+        
         // get page count
-        getJson("http://bbs-scopemanager-service:7000/api/scope_line?page=1", firstPage)
+        getJson(firstPageLink, firstPage)
         totalPages := firstPage.Total_pages
         //fmt.Println(totalPages)
         
         for i := 1; i <= totalPages; i++ {
-            //fmt.Println(i)
-            concatenated := fmt.Sprintf("%s?page=%d", link, i)
-            //fmt.Println(concatenated)
+            concatenated := fmt.Sprintf("%s?page=%d&q=%s", link, i, searchQuery)
             
             jsonData := new(ScopeLinePagedRecords)
             getJson(concatenated, jsonData)
@@ -82,21 +85,9 @@ func main() {
             
         // now loop scope getting domains
         for currentIndex := range scope_lines {
-            //fmt.Println(scope_lines[currentIndex])
             var Domains = getDomainListFromWildcardScopeLine(scope_lines[currentIndex])
-            //fmt.Println(Domains)
-            
-            //fmt.Printf("%v", Domains)
-            fmt.Println(strings.Join(Domains, "\n"))
-            
-            //fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-        
+            fmt.Println(strings.Join(Domains, "\n"))        
         }
-        
-        //fmt.Println("Getting hosts for line items")
-    
-        
-        
     }    
 
 
