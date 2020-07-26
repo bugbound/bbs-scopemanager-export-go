@@ -94,21 +94,23 @@ func main() {
         var scope_lines []string
         var allDomains []string
         var allIps []string
-        firstPage := new(ScopeLinePagedRecords) 
+        var knownIgnoredIps []string
+        
+        BbsProjectId := os.Args[2]
         link := "http://bbs-scopemanager-service:7000/api/scope_line"
-        getJson(link, firstPage)
+        searchQuery := fmt.Sprintf(`{"filters":[{"name":"project_id","op":"eq","val":"%s"}]}`, BbsProjectId)
+        firstPageLink := fmt.Sprintf(`%s?page=1&q=%s`, link, searchQuery)
+        
+        firstPage := new(ScopeLinePagedRecords) 
+        getJson(firstPageLink, firstPage)
         totalPages := firstPage.Total_pages
-        fmt.Println(totalPages)
         
         for i := 1; i <= totalPages; i++ {
-            //fmt.Println(i)
-            concatenated := fmt.Sprintf("%s?page=%d", link, i)
-            //fmt.Println(concatenated)
+            concatenated := fmt.Sprintf("%s?page=%d&q=%s", link, i, searchQuery)
             
             jsonData := new(ScopeLinePagedRecords)
             getJson(concatenated, jsonData)
             
-            //fmt.Println("Getting line items...")
             for currentIndex := range jsonData.Objects {
                 if contains(scope_lines, jsonData.Objects[currentIndex].Lineitem) == false {
                     scope_lines = append(scope_lines, jsonData.Objects[currentIndex].Lineitem)
@@ -132,9 +134,13 @@ func main() {
                         
                         if isExternal == true {
                             if contains(allIps, ipRecords[iprIndex]) == false {
-                                if isIpOnIgnoreList(ipRecords[iprIndex]) == false {
-                                    fmt.Println(ipRecords[iprIndex])
-                                    allIps = append(allIps, ipRecords[iprIndex])
+                                if contains(knownIgnoredIps, ipRecords[iprIndex]) == false { 
+                                    if isIpOnIgnoreList(ipRecords[iprIndex]) == false {
+                                        fmt.Println(ipRecords[iprIndex])
+                                        allIps = append(allIps, ipRecords[iprIndex])
+                                    } else {
+                                        knownIgnoredIps = append(knownIgnoredIps, ipRecords[iprIndex])
+                                    }
                                 }
                             }
                         }
@@ -149,21 +155,20 @@ func main() {
         var scope_lines []string
         var allDomains []string
         var allIps []string
-        firstPage := new(ScopeLinePagedRecords) 
+        BbsProjectId := os.Args[2]
         link := "http://bbs-scopemanager-service:7000/api/scope_line"
-        getJson(link, firstPage)
+        searchQuery := fmt.Sprintf(`{"filters":[{"name":"project_id","op":"eq","val":"%s"}]}`, BbsProjectId)
+        firstPageLink := fmt.Sprintf(`%s?page=1&q=%s`, link, searchQuery)
+        
+        firstPage := new(ScopeLinePagedRecords) 
+        getJson(firstPageLink, firstPage)
         totalPages := firstPage.Total_pages
-        fmt.Println(totalPages)
         
         for i := 1; i <= totalPages; i++ {
-            //fmt.Println(i)
-            concatenated := fmt.Sprintf("%s?page=%d", link, i)
-            //fmt.Println(concatenated)
-            
+            concatenated := fmt.Sprintf("%s?page=%d&q=%s", link, i, searchQuery)
             jsonData := new(ScopeLinePagedRecords)
             getJson(concatenated, jsonData)
             
-            //fmt.Println("Getting line items...")
             for currentIndex := range jsonData.Objects {
                 if contains(scope_lines, jsonData.Objects[currentIndex].Lineitem) == false {
                     scope_lines = append(scope_lines, jsonData.Objects[currentIndex].Lineitem)
