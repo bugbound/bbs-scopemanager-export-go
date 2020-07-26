@@ -132,22 +132,16 @@ func main() {
                         
                         if isExternal == true {
                             if contains(allIps, ipRecords[iprIndex]) == false {
-                                fmt.Println(ipRecords[iprIndex])
-                                allIps = append(allIps, ipRecords[iprIndex])
+                                if isIpOnIgnoreList(ipRecords[iprIndex]) == false {
+                                    fmt.Println(ipRecords[iprIndex])
+                                    allIps = append(allIps, ipRecords[iprIndex])
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        
-        //for currentIpIndex := range allIps {
-        //    fmt.Println(allIps[currentIpIndex])
-        //}
-        
-        //fmt.Println("Getting hosts for line items")
-        
-        
+        }        
         
     }    
     
@@ -214,8 +208,17 @@ func main() {
 
 }
 
+type IpOnIgnoreListRecord struct {
+    Ip string
+    Ignore bool
+}
 
-
+func isIpOnIgnoreList(ipToCheck string) bool  {
+    link := fmt.Sprintf("http://192.168.26.1:7000/check_ip?ip=%s", ipToCheck)
+    result := new(IpOnIgnoreListRecord) 
+    getJson(link, result)
+    return result.Ignore
+}
 
 func getDomainListFromWildcardScopeLine(scopeline string) []string {
     
